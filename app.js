@@ -203,6 +203,31 @@ function queryEmployeesAll(){
   );
 }
 
+//add departments
+function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        name: "department",
+        type: "input",
+        message: "What is your department name?",
+      },
+    ])
+    .then(function (answer) {
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(
+        "INSERT INTO department SET ?",
+        {
+          department_name: answer.department,
+        },
+        function (err) {
+          if (err) throw err;
+        }
+      );
+      init();
+    });
+}
+
 //add employee
 function addEmployee() {
   connection.query("SELECT * FROM role", function (err, res) {
@@ -318,4 +343,3 @@ function viewByDepartment(department) {
     });
 }
 
-//
