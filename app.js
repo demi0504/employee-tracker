@@ -39,6 +39,14 @@ const mainMenu = [
     },
 ];
 
+//render table data and menu prompt
+function renderScreen(tableData){
+    clear();
+    console.table(tableData);
+    //menu prompt
+    init();
+}
+
 //Display main menu and then prompt next function based on selection
 function init() {
     inquirer.prompt(mainMenu).then((response) => {
@@ -138,3 +146,32 @@ function viewDepartments() {
         promptDepartments(departments);
     });
 };
+
+function queryDepartmentsCallBack(callback){
+    const query = `SELECT department.name FROM department;`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        //extract department names to array
+        const departments = [];
+        for (let i = 0; i < res.length; i++) {
+            departments.push(res[i].name);
+        }
+        //prompt for department selection
+       callback(departments)
+    });
+}
+
+function viewRoles() {
+    const query = `SELECT id, title FROM employee_db.role;`;
+    connection.query(query, (err, res) => {
+        if(err) throw err;
+        const tableData = [];
+        for(let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id,
+                "Roles": res[i].title
+            });
+        }
+        renderScreen("All Roles", tableData);
+    });
+}
