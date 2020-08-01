@@ -23,34 +23,6 @@ connection.connect((err) => {
   init();
 });
 
-//Main menu options
-const mainMenu = [
-    {
-        type: "list", 
-        name: "firstChoice",
-        message: "What would you like to do?",
-        choices: [
-            "Add Employee", 
-            "Add Role", 
-            "Add Department", 
-            "View All Employees", 
-            "View All Employees By Role", 
-            "View All Employees By Department", 
-            "View All Roles", 
-            "View All Departments", 
-            "Update An Employee Role", 
-            "Exit",
-        ],
-    },
-];
-
-//render table data and menu prompt
-function renderScreen(tableData){
-    console.table(tableData);
-    //menu prompt
-    // init();
-}
-
 //Display main menu and then prompt next function based on selection
 function init() {
     inquirer
@@ -58,20 +30,12 @@ function init() {
             type: "list",
             name: "promptChoice",
             message: "Make a selection:",
-            choices: ["View All Employees", "View All Employees by Department", "View All Employees by Manager", "View Roles", "View Departments", "Add Employee", "Add Roles", "Add Departments", "Remove Employee", "Remove Role", "Remove Department", "Update Employee Role", "Update Employee Manager", "View Total Utilized Budget By Department", "Exit"]
+            choices: ["View All Employees", "View Roles", "View Departments", "Add Employee", "Add Roles", "Add Departments", "Update Employee Role", "Exit"]
           })
         .then(answer => {
           switch(answer.promptChoice){
             case "View All Employees":
             queryEmployeesAll();
-            break;
-
-            case "View All Employees by Department":
-            viewByDepartment();
-            break;
-
-            case "View All Employees by Manager":
-            queryManagers();
             break;
 
             case "View Roles":
@@ -94,28 +58,8 @@ function init() {
             addDepartment();
             break;
 
-            case "Remove Employee":
-            removeEmployee();
-            break;
-
-            case "Remove Role":
-            removeRole();
-            break;
-
-            case "Remove Department":
-            removeDepartment();
-            break;
-
             case "Update Employee Role":
             updateEmployeeRole();
-            break;
-
-            case "Update Employee Manager":
-            updateEmployeeManager();
-            break;
-
-            case "View Total Utilized Budget By Department":
-            viewTotalBudgetByDepartment();
             break;
 
             case "Exit":
@@ -170,21 +114,7 @@ function getManagers() {
   });
 }
 
-//Manager prompt
-function promptManagers (managers) {
-  inquirer
-      .prompt({
-          type: "list",
-          name: "promptChoice",
-          message: "Select Manager: ", 
-          choices: managers
-      })
-      .then(answer => {
-        queryEmployeesByManager(answer.promptChoice);
-      });
-};
-
-//query all employees
+//view all employees
 function queryEmployeesAll(){
   //sql query
   connection.query(
@@ -201,6 +131,31 @@ function queryEmployeesAll(){
         init();
       }
   );
+}
+
+//view all departments
+function viewDepartments() {
+  const query = `SELECT department.department_name FROM department`;
+  connection.query(query, (err, res) => {
+      if(err) throw err;
+      //push dept names to array
+      const departments = [];
+      for (let i = 0; i < res.length; i++) {
+          departments.push(res[i].department_name);
+      }
+      //prompt for dept selection
+      console.table(departments);
+      init();
+  });
+};
+
+//view all roles
+function viewRoles() {
+connection.query(`SELECT * FROM role`, function (err, data) {
+  if (err) throw err;
+  console.table(data);
+  init();
+});
 }
 
 //add departments
@@ -224,6 +179,7 @@ function addDepartment() {
           if (err) throw err;
         }
       );
+      console.log("Department Added!");
       init();
     });
 }
@@ -285,36 +241,63 @@ function addEmployee() {
               if (err) throw err;
             }
           );
+          console.log("Employee Added!");
           init();
         });
     });
   });
 }
 
-//query all departments
-function viewDepartments() {
-    const query = `SELECT department.department_name FROM department`;
-    connection.query(query, (err, res) => {
-        if(err) throw err;
-        //push dept names to array
-        const departments = [];
-        for (let i = 0; i < res.length; i++) {
-            departments.push(res[i].department_name);
-        }
-        //prompt for dept selection
-        console.table(departments);
-        init();
-    });
-};
-
-//query roles and display
-function viewRoles() {
-  connection.query(`SELECT * FROM role`, function (err, data) {
+//add roles
+function addRole() {
+  connection.query("SELECT * FROM department", function (err, res) {
     if (err) throw err;
-    console.table(data);
-    init();
+    inquirer
+      .prompt([
+        {
+          name: "title",
+          type: "input",
+          message: "What is your role title?",
+        },
+        {
+          name: "salary",
+          type: "input",
+          message: "What is the salary for this role?",
+          default: "0.00",
+        },
+        {
+          name: "departmentName",
+          type: "list",
+          message: "What is your department is this role in?",
+          choices: deptArr,
+        },
+      ])
+      .then(function (answer) {
+        // set corresponding department ID to variable
+        let deptID;
+        for (let d = 0; d < res.length; d++) {
+          if (res[d].department_name == answer.departmentName) {
+            deptID = res[d].department_id;
+          }
+        }
+        // when finished prompting, insert a new item into the db with that info
+        connection.query(
+          "INSERT INTO role SET ?",
+          {
+            title: answer.title,
+            salary: answer.salary,
+            department_id: deptID,
+          },
+          function (err) {
+            if (err) throw err;
+          }
+        );
+        console.log("Role Added!");
+        init();
+      });
   });
 }
+
 
 //query employees by department
 function viewByDepartment(department) {
