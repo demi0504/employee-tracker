@@ -1,6 +1,6 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
-const cTable = require("console.table");
+const cTable = require('console.table');
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -136,74 +136,60 @@ function promptManagers (managers) {
 //query all employees
 function queryEmployeesAll(){
   //sql query
-  const query = `
-  SELECT employee.employee_id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
-  FROM employee
-  LEFT JOIN role ON employee.role_id = role.role_id
-  LEFT JOIN department ON department.department_id = role.department_id;`
-  connection.query(query, (err, res) => {
-    if (err) throw err;
-    const tableData = [];
-    for (let i = 0; i < res.length; i++) {
-      tableData.push({
-        "ID": res[i].id,
-        "First Name": res[i].first_name,
-        "Last Name": res[i].last_name, 
-        "Role": res[i].title,
-        "Salary": res[i].salary, 
-        "Department": res[i].salary, 
-        "Department": res[i].department_name
-      });
-    }
-    renderScreen("All Employees", tableData);
-  });
-};
+  connection.query(
+    `
+    SELECT employee.employee_id, employee.first_name, employee.last_name, role.title,
+    department.department_name AS department,role.salary,CONCAT(a.first_name, " ", a.last_name) AS manager
+    FROM employee
+    LEFT JOIN role ON employee.role_id = role.role_id
+    LEFT JOIN department ON role.department_id = department.department_id
+    LEFT JOIN employee a ON a.employee_id = employee.manager_id;`,
+      function (err, data) {
+        if (err) throw err;
+        console.table(data);
+        init();
+      }
+  );
+}
 
 //query all departments
 function viewDepartments() {
-    const query = `SELECT department.name FROM department`;
+    const query = `SELECT department.department_name FROM department`;
     connection.query(query, (err, res) => {
         if(err) throw err;
         //push dept names to array
         const departments = [];
         for (let i = 0; i < res.length; i++) {
-            departments.push(res[i].name);
+            departments.push(res[i].department_name);
         }
         //prompt for dept selection
-        promptDepartments(departments);
+        console.table(departments);
+        init();
     });
 };
 
-function queryDepartmentsCallBack(callback){
-    const query = `SELECT department.name FROM department;`;
-    connection.query(query, (err, res) => {
-        if (err) throw err;
-        //extract department names to array
-        const departments = [];
-        for (let i = 0; i < res.length; i++) {
-            departments.push(res[i].name);
-        }
-        //prompt for department selection
-       callback(departments)
-    });
-}
+// function queryDepartmentsCallBack(callback){
+//     const query = `SELECT department.name FROM department;`;
+//     connection.query(query, (err, res) => {
+//         if (err) throw err;
+//         //extract department names to array
+//         const departments = [];
+//         for (let i = 0; i < res.length; i++) {
+//             departments.push(res[i].name);
+//         }
+//         //prompt for department selection
+//        callback(departments)
+//     });
+// }
 
 //query roles and display
 function viewRoles() {
-    const query = `SELECT id, title FROM employee_db.role;`;
-    connection.query(query, (err, res) => {
-        if(err) throw err;
-        const tableData = [];
-        for(let i = 0; i < res.length; i++) {
-            tableData.push({
-                "ID": res[i].id,
-                "Roles": res[i].title
-            });
-        }
-        renderScreen("All Roles", tableData);
-    });
+  connection.query(`SELECT * FROM role`, function (err, data) {
+    if (err) throw err;
+    console.table(data);
+    init();
+  });
 }
-
 //query all managers
 // function 
 //query employees by department
