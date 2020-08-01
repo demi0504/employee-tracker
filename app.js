@@ -49,45 +49,75 @@ function renderScreen(tableData){
 
 //Display main menu and then prompt next function based on selection
 function init() {
-    inquirer.prompt(mainMenu).then((response) => {
-        switch (response.firstChoice) {
-            case "Add Employee":
-                employee();
-                break;
-            case "Add Role":
-                role();
-                break;
-            case "Add Department":
-                department();
-                break;
+    inquirer
+        .prompt({
+            type: "list",
+            name: "promptChoice",
+            message: "Make a selection:",
+            choices: ["View All Employees", "View All Employees by Department", "View All Employees by Manager", "View Roles", "View Departments", "Add Employee", "Add Roles", "Add Departments", "Remove Employee", "Remove Role", "Remove Department", "Update Employee Role", "Update Employee Manager", "View Total Utilized Budget By Department", "Exit"]
+          })
+        .then(answer => {
+          switch(answer.promptChoice){
             case "View All Employees":
-                queryEmployeesAll();
-                break;
-            case "View All Employees By Role":
-                viewByRole();
-                break;
-            case "View All Employees By Department":
-                viewByDepartment();
-                break;
-            case "View All Roles":
-                viewRoles();
-                break;
-            case "View All Departments":
-                viewDepartments();
-                break;
-            case "Update An Employee Role":
-                updateEmployee();
-                break;
+            queryEmployeesAll();
+            break;
+
+            case "View All Employees by Department":
+            queryDepartments();
+            break;
+
+            case "View All Employees by Manager":
+            queryManagers();
+            break;
+
+            case "View Roles":
+            viewRoles();
+            break;
+
+            case "View Departments":
+            viewDepartments();
+            break;
+
+            case "Add Employee":
+            addEmployee();
+            break;
+
+            case "Add Roles":
+            addRole();
+            break;
+
+            case "Add Departments":
+            addDepartment();
+            break;
+
+            case "Remove Employee":
+            removeEmployee();
+            break;
+
+            case "Remove Role":
+            removeRole();
+            break;
+
+            case "Remove Department":
+            removeDepartment();
+            break;
+
+            case "Update Employee Role":
+            updateEmployeeRole();
+            break;
+
+            case "Update Employee Manager":
+            updateEmployeeManager();
+            break;
+
+            case "View Total Utilized Budget By Department":
+            viewTotalBudgetByDepartment();
+            break;
+
             case "Exit":
-                connection.end();
-                break;
-            default:
-                connection.end();  
+            connection.end();
         };
     });
-    // getDepts();
-    // getRoles();
-    // getManagers();
 };
 
 //Manager prompt
@@ -161,6 +191,7 @@ function queryDepartmentsCallBack(callback){
     });
 }
 
+//query roles and display
 function viewRoles() {
     const query = `SELECT id, title FROM employee_db.role;`;
     connection.query(query, (err, res) => {
@@ -173,5 +204,34 @@ function viewRoles() {
             });
         }
         renderScreen("All Roles", tableData);
+    });
+}
+
+//query all managers
+// function 
+//query employees by department
+function viewByDepartment(department) {
+    const query = `
+    SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, concat(manager.first_name, " ", manager.last_name) AS manager_full_name
+    FROM employee
+    INNER JOIN role ON employee.role_id = role.id
+    INNER JOIN employee AS manager ON employee.manager_id = manager.id
+    INNER JOIN department ON department.id = role.department_id
+    WHERE department.name = "${department}";
+    `;
+    connection.query(query, (err, res) => {
+        if(err) throw err;
+        const tableData = [];
+        for (let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id, 
+                "First Name": res[i].first_name,
+                "Last Name": res[i].last_name,
+                "Role": res[i].title,
+                "Salary": res[i].salary, 
+                "Manager": res[i].manager_full_name
+            });
+        };
+        renderScreen(`${department} Department`, tableData);
     });
 }
