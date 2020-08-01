@@ -41,10 +41,9 @@ const mainMenu = [
 
 //render table data and menu prompt
 function renderScreen(tableData){
-    clear();
     console.table(tableData);
     //menu prompt
-    init();
+    // init();
 }
 
 //Display main menu and then prompt next function based on selection
@@ -63,7 +62,7 @@ function init() {
             break;
 
             case "View All Employees by Department":
-            queryDepartments();
+            viewByDepartment();
             break;
 
             case "View All Employees by Manager":
@@ -138,11 +137,10 @@ function promptManagers (managers) {
 function queryEmployeesAll(){
   //sql query
   const query = `
-  SELECT employee.employee_id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, concat(manager.first_name, " ", manager.last_name) AS manager_full_name
+  SELECT employee.employee_id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
   FROM employee
-  LEFT JOIN role ON employee.role_id = role_id
-  LEFT JOIN department ON department.department_id = role.department_id
-    LEFT JOIN employee as manager ON employee.manager_id = manager.id;`
+  LEFT JOIN role ON employee.role_id = role.role_id
+  LEFT JOIN department ON department.department_id = role.department_id;`
   connection.query(query, (err, res) => {
     if (err) throw err;
     const tableData = [];
@@ -154,8 +152,7 @@ function queryEmployeesAll(){
         "Role": res[i].title,
         "Salary": res[i].salary, 
         "Department": res[i].salary, 
-        "Department": res[i].department_name,
-        "Manager": res[i].manager_full_name
+        "Department": res[i].department_name
       });
     }
     renderScreen("All Employees", tableData);
@@ -235,3 +232,5 @@ function viewByDepartment(department) {
         renderScreen(`${department} Department`, tableData);
     });
 }
+
+//
